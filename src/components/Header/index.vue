@@ -50,16 +50,17 @@
         },
         methods: {
             goSearch() {
-                // this.$router.push(`/search/${this.keyword}?kw=${this.keyword}`);
-                this.$router.push({
+                let location = {
                     name: 'search',
                     params: {
                         keyword: this.keyword||undefined
-                    },
-                    query: {
-                        kw: this.keyword
                     }
-                });
+                };
+                if(this.$route.query) {
+                    location.query = this.$route.query;
+                }
+                // this.$router.push(`/search/${this.keyword}?kw=${this.keyword}`);
+                this.$router.push(location);
             }
         }
     }

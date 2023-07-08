@@ -15,6 +15,11 @@ export default {
   components: {
     Header,
     Footer
+  },
+  mounted() {
+    //因为三级菜单一般只需请求一次服务器即可，所以可以从TypeNav组件中移到App根组件中，
+    // 让其只执行一次请求
+    this.$store.dispatch('categoryList');
   }
 }
 </script>

@@ -13,6 +13,12 @@ import TypeNav from "@/pages/Home/TypeNav";
 //注册全局组件
 Vue.component(TypeNav.name, TypeNav);
 
+//引入mockServe.js mock数据
+import '@/mock/mockServe';
+
+//引入swiper css
+import "swiper/css/swiper.css";
+
 new Vue({
   render: h => h(App),
   router,

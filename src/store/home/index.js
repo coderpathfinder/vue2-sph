@@ -1,13 +1,21 @@
 //首页模块store
 
-import {reqCategoryList} from "@/api";
+import {reqCategoryList, reqBannerList, reqFloorList} from "@/api";
 
 const state = {
-    categoryList: []
+    categoryList: [],
+    bannerList: [],
+    floorList: []
 };
 const mutations = {
     CATEGORY_LIST(state, categoryList) {
         state.categoryList = categoryList;
+    },
+    BANNER_LIST(state, bannerList) {
+        state.bannerList = bannerList;
+    },
+    FLOOR_LIST(state, floorList) {
+        state.floorList = floorList;
     }
 };
 const actions = {
@@ -15,6 +23,18 @@ const actions = {
         let result = await reqCategoryList();
         if (result.code==200) {
             commit("CATEGORY_LIST", result.data);
+        }
+    },
+    async getBannerList({commit}) {
+        let result = await reqBannerList();
+        if (result.code==200) {
+            commit("BANNER_LIST", result.data);
+        }
+    },
+    async getFloorList({commit}) {
+        let result = await reqFloorList();
+        if (result.code==200) {
+            commit("FLOOR_LIST", result.data);
         }
     }
 };
