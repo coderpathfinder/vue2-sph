@@ -4,7 +4,7 @@
       <div class="fl key brand">品牌</div>
       <div class="value logos">
         <ul class="logo-list">
-          <li v-for="tm in trademarkList" :key="tm.tmId">{{tm.tmName}}</li>
+          <li v-for="tm in trademarkList" :key="tm.tmId" @click="changeTrademark(tm.tmName)">{{tm.tmName}}</li>
           <!-- <li>TCL</li>
           <li>长虹（CHANGHONG）</li>
           <li>飞利浦（PHILIPS）</li>
@@ -34,7 +34,7 @@
       <div class="fl value">
         <ul class="type-list">
           <li v-for="(attrValue, index) in attr.attrValueList" :key="index">
-            <a>{{attrValue}}</a>
+            <a @click="addProp(attrValue)">{{attrValue}}</a>
           </li>
         </ul>
       </div>
@@ -51,6 +51,14 @@ export default {
   computed: {
     ...mapGetters(['attrsList', 'trademarkList', 'pageNo', 'pageSize', 'total', 'totalPages'])
   },
+  methods: {
+    addProp(prop) {
+      this.$bus.$emit('addSearchProp', prop);
+    },
+    changeTrademark(trademark) {
+      this.$bus.$emit('changeTrademark', trademark);
+    }
+  }
 }
 </script>
 

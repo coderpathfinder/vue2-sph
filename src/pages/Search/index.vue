@@ -11,10 +11,16 @@
             </li>
           </ul>
           <ul class="fl sui-tag">
-            <li class="with-x">手机</li>
-            <li class="with-x">iphone<i>×</i></li>
-            <li class="with-x">华为<i>×</i></li>
-            <li class="with-x">OPPO<i>×</i></li>
+            <!-- <li class="with-x">手机</li> -->
+            <!-- 搜索关键字面包屑 -->
+            <li v-if="keyword" class="with-x with-y">{{keyword}}<i @click="clearKeyword">×</i></li>
+            <!-- 分类名称面包屑 -->
+            <li v-if="categoryName" class="with-x with-y">{{categoryName}}<i @click="clearCategoryName">×</i></li>
+            <!-- 品牌名称面包屑 -->
+            <li v-if="trademark" class="with-x with-y">{{trademark}}<i @click="trademark = undefined">×</i></li>
+            <li v-for="(prop, index) in props" :key="index" class="with-x">
+              {{prop}}<i @click="removeProp(prop)">×</i>
+            </li>
           </ul>
         </div>
 
@@ -52,7 +58,8 @@
               <li class="yui3-u-1-5" v-for="good in goodsList" :key="good.id">
                 <div class="list-wrap">
                   <div class="p-img">
-                    <a href="item.html" target="_blank"><img :src="good.defaultImg" /></a>
+                    <!-- <a href="item.html" target="_blank"><img :src="good.defaultImg" /></a> -->
+                    <router-link :to="`/detail/${good.id}`"><img v-lazy="good.defaultImg" /></router-link>
                   </div>
                   <div class="price">
                     <strong>
@@ -74,7 +81,13 @@
               </li>
             </ul>
           </div>
-          <div class="fr page">
+          <!-- 分页器 -->
+          <Pagination v-if="total" 
+          :pageNoProp="searchParams.pageNo" 
+          :pageSizeProp="searchParams.pageSize" 
+          :continuesProp="5"
+          :changePage="'changePageNo'"/>
+          <!-- <div class="fr page">
             <div class="sui-pagination clearfix">
               <ul>
                 <li class="prev disabled">
@@ -102,7 +115,7 @@
               </ul>
               <div><span>共10页&nbsp;</span></div>
             </div>
-          </div>
+          </div> -->
         </div>
       </div>
     </div>
@@ -111,22 +124,39 @@
 
 <script>
 //使用vuex计算属性，注意getters和state不一样，getters不划分模块
-import { mapGetters } from 'vuex';
-import SearchSelector from './SearchSelector/SearchSelector'
+import { mapGetters, mapState } from 'vuex';
+import SearchSelector from './SearchSelector/SearchSelector';
+import Pagination from '@/components/Pagination';
 export default {
   name: 'Search',
   beforeMount() {
-    // this.searchParams.category1Id = this.$route.query.category1Id;
-    // this.searchParams.category2Id = this.$route.query.category2Id;
-    // this.searchParams.category3Id = this.$route.query.category3Id;
-    // this.searchParams.categoryName = this.$route.query.categoryName;
-    // this.searchParams.keyword = this.$route.params.keyword;
-
-    //es6对象合并
-    Object.assign(this.params, this.$route.query, this.$route.params);
+    this.initSearchParams();
   },
   mounted() {
+    //向全局事件总线注册清除搜索关键字函数
+    this.$bus.$on('addSearchProp', (prop) => {
+        this.addProp(prop);
+    });
+    this.$bus.$on('changeTrademark', (prop) => {
+        this.changeTrademark(prop);
+    });
+    this.$bus.$on('changePageNo', (prop) => {
+        this.changePageNo(prop);
+    });
     this.getData();
+  },
+  watch: {
+    $route(newValue, oldValue) {
+      this.initSearchParams();
+      // Object.assign(this.params, this.$route.query, this.$route.params);
+      this.getData();
+    },
+    props(newValue, oldValue) {
+      this.getData();
+    },
+    trademark(newValue, oldValue) {
+      this.getData();
+    }
   },
   data() {
     return {
@@ -156,15 +186,81 @@ export default {
   },
   //使用vuex的getters时，不分模块
   computed: {
-    ...mapGetters(['attrsList', 'goodsList', 'trademarkList', 'pageNo', 'pageSize', 'total', 'totalPages'])
+    ...mapGetters(['attrsList', 'goodsList', 'trademarkList']),
+    ...mapState({total: state=>state.search.searchList.total}),
+    keyword() {
+      return this.$route.params.keyword||'';
+    },
+    categoryName() {
+      return this.$route.query.categoryName||'';
+    },
+    trademark: {
+      get() {
+        return this.searchParams.trademark;
+      },
+      set(trademark) {
+        this.searchParams.trademark = trademark;
+      }
+    },
+    props: {
+      get() {
+        return this.searchParams.props;
+      },
+      set(prop) {
+        this.searchParams.props.push(prop);
+      }
+    }
   },
   components: {
-    SearchSelector
+    SearchSelector,
+    Pagination
   },
   methods: {
     getData() {
       this.$store.dispatch('getSearchList', this.searchParams);
-    }
+    },
+    initSearchParams() {
+      this.searchParams.category1Id = this.$route.query.category1Id;
+      this.searchParams.category2Id = this.$route.query.category2Id;
+      this.searchParams.category3Id = this.$route.query.category3Id;
+      this.searchParams.categoryName = this.$route.query.categoryName;
+      this.searchParams.keyword = this.$route.params.keyword;
+      this.searchParams.order = '';
+      this.searchParams.pageNo = 1;
+      this.searchParams.pageSize = 10;
+      this.searchParams.props = [];
+      this.searchParams.trademark = '';
+    },
+    changeTrademark(newValue) {
+      this.searchParams.trademark = newValue;
+    },
+    clearKeyword() {
+      this.$route.params.keyword = undefined;
+      this.$bus.$emit('clearKeyword');
+      console.log(this.$route);
+      this.$router.push({name:'search', params: this.$route.params, query: this.$route.query});
+    },
+    clearCategoryName() {
+      this.$route.query.categoryName = undefined;
+      this.$router.push({name:'search', params: this.$route.params});
+      console.log(this.$route);
+    },
+    addProp(prop) {
+      if(this.props.some(item=>item === prop)) {
+        return;
+      }
+      this.props = prop;
+    },
+    removeProp(prop) {
+      if(!this.searchParams.props.some(item=>item === prop)) {
+        return;
+      }
+      this.searchParams.props = this.searchParams.props.filter(item=>item!=prop);
+    },
+    changePageNo(newValue) {
+      this.searchParams.pageNo = newValue;
+      this.getData();
+    },
   }
 }
 </script>
@@ -227,6 +323,14 @@ export default {
           transition: color 400ms;
           cursor: pointer;
 
+          &.with-y {
+            font-weight: 500;
+          }
+
+          &:hover {
+            color: #28a3ef;
+          }
+
           i {
             margin-left: 10px;
             cursor: pointer;
@@ -234,11 +338,11 @@ export default {
             display: inline-block;
             height: 100%;
             vertical-align: middle;
+            &:hover {
+              color: #e1251b;
+            }
           }
-
-          &:hover {
-            color: #28a3ef;
-          }
+          
         }
       }
     }

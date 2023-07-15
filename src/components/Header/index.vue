@@ -5,15 +5,19 @@
             <div class="container">
                 <div class="loginList">
                     <p>尚品汇欢迎您！</p>
-                    <p>
+                    <p v-if="!userName">
                         <span>请</span>
-                        <router-link to="login">登录</router-link>
+                        <router-link to="/login">登录</router-link>
                         <router-link to="/register" class="register">免费注册</router-link>
+                    </p>
+                    <p v-else>
+                        <a>{{ userName }}</a>
+                        <a @click="logout" class="register">退出登录</a>
                     </p>
                 </div>
                 <div class="typeList">
-                    <a href="###">我的订单</a>
-                    <a href="###">我的购物车</a>
+                    <router-link to="/center">我的订单</router-link>
+                    <router-link to="/showcart">我的购物车</router-link>
                     <a href="###">我的尚品汇</a>
                     <a href="###">尚品汇会员</a>
                     <a href="###">企业采购</a>
@@ -41,125 +45,148 @@
 </template>
 
 <script>
-    export default {
-        name: "Header",
-        data() {
-            return {
-                keyword: ''
+import { mapState } from 'vuex';
+export default {
+    name: "Header",
+    data() {
+        return {
+            keyword: ''
+        }
+    },
+    mounted() {
+        this.keyword = this.$route.params.keyword || ''
+        //向全局事件总线注册清除搜索关键字函数
+        this.$bus.$on('clearKeyword', () => {
+            this.keyword = '';
+        });
+    },
+    computed: {
+        ...mapState({
+            //vuex的state中的home模块下的bannerList
+            userName: state => state.user.loginName
+        }),
+    },
+    methods: {
+        goSearch() {
+            let location = {
+                name: 'search',
+                params: {
+                    keyword: this.keyword || undefined
+                }
+            };
+            if (this.$route.query) {
+                location.query = this.$route.query;
+            }
+            // this.$router.push(`/search/${this.keyword}?kw=${this.keyword}`);
+            this.$router.push(location);
+        },
+        async logout() {
+            try {
+                await this.$store.dispatch('logout');
+                //成功跳转到登录页
+                this.$router.push('/login');
+            } catch (error) {
+                alert('退出登录失败');
             }
         },
-        methods: {
-            goSearch() {
-                let location = {
-                    name: 'search',
-                    params: {
-                        keyword: this.keyword||undefined
-                    }
-                };
-                if(this.$route.query) {
-                    location.query = this.$route.query;
-                }
-                // this.$router.push(`/search/${this.keyword}?kw=${this.keyword}`);
-                this.$router.push(location);
-            }
-        }
     }
+}
 </script>
 
 <style scoped lang="less">
-    .header {
-        &>.top {
-            background-color: #eaeaea;
-            height: 30px;
-            line-height: 30px;
+.header {
+    &>.top {
+        background-color: #eaeaea;
+        height: 30px;
+        line-height: 30px;
 
-            .container {
-                width: 1200px;
-                margin: 0 auto;
-                overflow: hidden;
-
-                .loginList {
-                    float: left;
-
-                    p {
-                        float: left;
-                        margin-right: 10px;
-
-                        .register {
-                            border-left: 1px solid #b3aeae;
-                            padding: 0 5px;
-                            margin-left: 5px;
-                        }
-                    }
-                }
-
-                .typeList {
-                    float: right;
-
-                    a {
-                        padding: 0 10px;
-
-                        &+a {
-                            border-left: 1px solid #b3aeae;
-                        }
-                    }
-
-                }
-
-            }
-        }
-
-        &>.bottom {
+        .container {
             width: 1200px;
             margin: 0 auto;
             overflow: hidden;
 
-            .logoArea {
+            .loginList {
                 float: left;
 
-                .logo {
-                    img {
-                        width: 175px;
-                        margin: 25px 45px;
+                p {
+                    float: left;
+                    margin-right: 10px;
+
+                    .register {
+                        border-left: 1px solid #b3aeae;
+                        padding: 0 5px;
+                        margin-left: 5px;
                     }
                 }
             }
 
-            .searchArea {
+            .typeList {
                 float: right;
-                margin-top: 35px;
 
-                .searchForm {
-                    overflow: hidden;
+                a {
+                    padding: 0 10px;
 
-                    input {
-                        box-sizing: border-box;
-                        width: 490px;
-                        height: 32px;
-                        padding: 0px 4px;
-                        border: 2px solid #ea4a36;
-                        float: left;
-
-                        &:focus {
-                            outline: none;
-                        }
+                    &+a {
+                        border-left: 1px solid #b3aeae;
                     }
+                }
 
-                    button {
-                        height: 32px;
-                        width: 68px;
-                        background-color: #ea4a36;
-                        border: none;
-                        color: #fff;
-                        float: left;
-                        cursor: pointer;
+            }
 
-                        &:focus {
-                            outline: none;
-                        }
+        }
+    }
+
+    &>.bottom {
+        width: 1200px;
+        margin: 0 auto;
+        overflow: hidden;
+
+        .logoArea {
+            float: left;
+
+            .logo {
+                img {
+                    width: 175px;
+                    margin: 25px 45px;
+                }
+            }
+        }
+
+        .searchArea {
+            float: right;
+            margin-top: 35px;
+
+            .searchForm {
+                overflow: hidden;
+
+                input {
+                    box-sizing: border-box;
+                    width: 490px;
+                    height: 32px;
+                    padding: 0px 4px;
+                    border: 2px solid #ea4a36;
+                    float: left;
+
+                    &:focus {
+                        outline: none;
+                    }
+                }
+
+                button {
+                    height: 32px;
+                    width: 68px;
+                    background-color: #ea4a36;
+                    border: none;
+                    color: #fff;
+                    float: left;
+                    cursor: pointer;
+
+                    &:focus {
+                        outline: none;
                     }
                 }
             }
         }
     }
+}
 </style>
